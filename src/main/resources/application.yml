@@ -1,0 +1,24 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: wbdb
+
+  flyway:
+    url: "jdbc:mariadb://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_DB:wbdb}?useMysqlMetadata=true"
+    user: ${DB_USERNAME:wbdb}
+    password: ${DB_PASSWORD:wbdb}
+    locations: classpath:db
+    clean-on-validation-error: true
+
+master:
+  datasource:
+    url: "jdbc:mariadb://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_DB:wbdb}"
+    username: ${DB_USERNAME:wbdb}
+    password: ${DB_PASSWORD:wbdb}
+    driverClassName: org.mariadb.jdbc.Driver
+
+logging:
+  level:
+    org.zalando.logbook: TRACE
