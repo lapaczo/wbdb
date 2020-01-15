@@ -10,6 +10,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,7 @@ public class ConnectionServiceImpl implements ConnectionService, InitializingBea
     }
 
     @Override
+    @Transactional
     public ConnectionResponse createConnection(ConnectionRequest request) {
         log.info("Create new connection: {}", request);
         Connection connection = repository.create(mapper.requestToEntity(request));
@@ -57,13 +59,14 @@ public class ConnectionServiceImpl implements ConnectionService, InitializingBea
     }
 
     @Override
+    @Transactional
     public ConnectionResponse updateConnection(Long connectionId, ConnectionRequest connectionRequest) {
         log.info("Update connection with id: {}, {}", connectionId, connectionRequest);
         Connection connection = repository.findById(connectionId);
         mapper.copyRequestToEntity(connection, connectionRequest);
 
         log.info("Data source with id: {} were removed.", connectionId);
-        dataSourceMap.remove(connectionId);
+        removeDataSource(connectionId);
 
         Connection updated = repository.update(connection);
 
@@ -72,6 +75,7 @@ public class ConnectionServiceImpl implements ConnectionService, InitializingBea
     }
 
     @Override
+    @Transactional
     public void deleteConnection(Long connectionId) {
         log.info("Delete connection with id: {}", connectionId);
         repository.findById(connectionId);
@@ -79,7 +83,7 @@ public class ConnectionServiceImpl implements ConnectionService, InitializingBea
         repository.deleteById(connectionId);
 
         log.info("Data source with id: {} were removed.", connectionId);
-        dataSourceMap.remove(connectionId);
+        removeDataSource(connectionId);
     }
 
     @Override
@@ -103,5 +107,11 @@ public class ConnectionServiceImpl implements ConnectionService, InitializingBea
 
         dataSourceMap.put(connection.getId(), ds);
         log.info("Data source with id: {} created for connection: {}", connection.getId(), connection);
+    }
+
+    private void removeDataSource(Long id) {
+        HikariDataSource ds = (HikariDataSource) dataSourceMap.get(id);
+        ds.close();
+        dataSourceMap.remove(id);
     }
 }
